@@ -29,3 +29,20 @@ Bug reports for the plugin belong in https://github.com/bshelton/farming-profit/
 ## Artwork
 
 The farming icon and illustrative ledger screenshot come from the Farming Run Profit repository. The screenshot contains synthetic data. The LL favicon is an original geometric lettermark. Lumby Labs is independent of RuneLite and Jagex.
+
+## Public install trends
+
+`trends.py` records the first successful observation each UTC day from
+`https://api.runelite.net/pluginhub` in `data/install-history.json`. Missing or
+invalid counts fail collection; no zeros or historical values are invented.
+The site renders the latest 90 observations as a chart and all observations in a table/JSON download.
+
+The Pages workflow collects at 12:23 UTC daily (GitHub may delay scheduled runs).
+Run **Publish site → Run workflow** in Actions to collect manually and deploy.
+The same job commits the snapshot and deploys, so it does not depend on a bot
+commit triggering another workflow. A failed collection leaves the published
+site unchanged; check the last-collected timestamp and workflow failures.
+
+Local checks: `python3 -m unittest discover -s tests`, `python3 build.py`,
+`python3 check.py`. Use `python3 trends.py` to collect a real observation.
+This collects public aggregate counts only, not player telemetry.

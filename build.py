@@ -1,6 +1,8 @@
 """Build the Lumby Labs static site using Python's standard library."""
 from pathlib import Path
 import shutil
+import json
+from trends import render, HISTORY
 from html import escape
 
 ROOT = Path(__file__).resolve().parent
@@ -31,10 +33,11 @@ def build():
     if OUT.exists(): shutil.rmtree(OUT)
     OUT.mkdir()
     shutil.copytree(ROOT/'assets', OUT/'assets')
+    shutil.copytree(ROOT/'data', OUT/'data')
     (OUT/'.nojekyll').touch()
     home='''<section class="hero"><h1>A little less friction.<br>A little more game.</h1><p>RuneLite plugins from Lumby Labs. Useful tools for your everyday routes, with clear guides when you need a hand.</p></section>
 <section aria-labelledby="plugins-title"><div class="section-heading"><h2 id="plugins-title">The plugin collection</h2><span class="quiet">One plugin. Room to grow.</span></div>
-<article class="plugin-entry"><div><div class="plugin-title"><img src="{{root}}assets/farming-run-profit.png" alt="" width="48" height="48"><div><h2>Farming Run Profit</h2><span class="status">Available in the Plugin Hub</span></div></div><p>Know what your farming run earned. Track harvests, seeds, compost, and supported travel costs in one itemized ledger, with herb-sack support and saved run history.</p><div class="actions"><a class="button" href="{{root}}docs/farming-run-profit/">Read the guide</a><a href="https://runelite.net/plugin-hub/">Get the plugin</a></div></div><dl class="facts"><div><dt>Category</dt><dd>Farming</dd></div><div><dt>Run history</dt><dd>Stored locally</dd></div><div><dt>Source</dt><dd><a href="https://github.com/bshelton/farming-profit">GitHub</a></dd></div><div><dt>Support</dt><dd><a href="https://github.com/bshelton/farming-profit/issues">GitHub Issues</a></dd></div></dl></article></section>
+<article class="plugin-entry"><div><div class="plugin-title"><img src="{{root}}assets/farming-run-profit.png" alt="" width="48" height="48"><div><h2>Farming Run Profit</h2><span class="status">Available in the Plugin Hub</span></div></div><p>Know what your farming run earned. Track harvests, seeds, compost, and supported travel costs in one itemized ledger, with herb-sack support and saved run history.</p><div class="actions"><a class="button" href="{{root}}docs/farming-run-profit/">Read the guide</a><a href="https://runelite.net/plugin-hub/">Get the plugin</a></div></div><dl class="facts"><div><dt>Install trends</dt><dd><a href="{{root}}stats/">View daily history</a></dd></div><div><dt>Category</dt><dd>Farming</dd></div><div><dt>Run history</dt><dd>Stored locally</dd></div><div><dt>Source</dt><dd><a href="https://github.com/bshelton/farming-profit">GitHub</a></dd></div><div><dt>Support</dt><dd><a href="https://github.com/bshelton/farming-profit/issues">GitHub Issues</a></dd></div></dl></article></section>
 <section class="help-strip"><div><h2>A question, a bug, or an idea?</h2><p>Find the right guide or open an issue for the plugin you use.</p></div><a href="{{root}}help/">Find help &amp; support</a></section>'''
     write('', 'RuneLite plugins & documentation', 'Discover RuneLite plugins by Lumby Labs. Read setup guides, understand features, and find help through GitHub Issues.', home)
     for i,(slug,label,source) in enumerate(DOCS):
@@ -47,7 +50,8 @@ def build():
         body=f'<div class="docs-layout"><aside class="doc-nav">{sidebar}</aside><div>{mobile}<article class="article">{content}<nav class="doc-next" aria-label="Guide pages">{previous}{nextlink}</nav></article></div></div>'
         write(path, label+' — Farming Run Profit', f'{label} for Farming Run Profit, a RuneLite plugin by Lumby Labs.', body,'docs')
     write('help/','Help & support','Report a bug, suggest a feature, or get help with Lumby Labs RuneLite plugins.', '<article class="article simple-page">'+(ROOT/'content/help.html').read_text()+'</article>','help')
+    write('stats/', 'Install trends', 'Daily public active install counts for Farming Run Profit.', '<article class="article simple-page">'+render(json.loads(HISTORY.read_text()))+'</article>')
     write('404.html','Page not found','Find Lumby Labs plugin guides and support.', '<div class="not-found"><h1>This page wandered off.</h1><p>Head back to the plugin collection or find the guide you need.</p><a class="button" href="{{root}}">Back to plugins</a></div>')
-    print('Built 9 static pages in _site/')
+    print('Built 10 static pages in _site/')
 
 if __name__=='__main__': build()
