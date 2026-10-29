@@ -1,0 +1,16 @@
+<h1>How profit is calculated</h1>
+<p class="lead">A record of this trip’s harvest and costs, rather than the lifetime profit of each patch.</p>
+<div class="formula">Estimated profit = harvest value − supplies used</div>
+<h2>Harvest value</h2>
+<p>Each recorded item uses a GE price snapshot. Picking fruit from an already-planted dragonfruit tree counts the fruit without inventing an old sapling cost. Moving, banking, or noting produce does not count as a fresh harvest.</p>
+<p>Herb-sack entries inferred from Farming XP are labeled. See <a href="{{root}}docs/farming-run-profit/herb-sacks/">Herb sacks</a> for how those counts work.</p>
+<h2>Costs included automatically</h2>
+<ul><li>Visible seed and sapling consumption during planting.</li><li>Supported successful compost treatments. A bottomless compost application uses half the price of one bucket.</li><li>Supported gardener payments with recent nearby patch context.</li><li>Consumed icy/stony basalt, supported teleport tablets, and loose inventory teleport scrolls during an active run.</li></ul>
+<h2>Costs to add manually</h2>
+<p>Use <strong>Add / correct entry</strong> for spell runes, rune-pouch supplies, jewellery charges, master scroll-book teleports, Fertile Soil, seed-box consumption, or missed gardener payments. Start a run before traveling if you want its first teleport included.</p>
+<h2>Example</h2>
+<p>If your harvest is valued at 100,000 gp and this trip’s supplies cost 30,000 gp, estimated profit is 70,000 gp. These are illustrative values; your prices and quantities will differ.</p>
+<div class="note"><p><strong>What the total excludes:</strong> historical planting costs, GE sale tax, and the price you actually paid or sold for. Items without a GE price are valued at zero and flagged for review.</p></div>
+<h2>Farming scope</h2>
+<p>The harvest catalogue covers herbs, allotments, flowers, hops, bushes, cactus, fruit trees, seaweed, mushrooms, belladonna, grapes, calquat, celastrus, crystal trees, and coral. Detection coverage varies by crop and event sequence; check unexpected totals and report mismatches.</p>
+<p>Woodcutting logs, combat drops, Hespori combat loot, farming contracts, birdhouses, and minigame rewards are outside this tracker’s automatic accounting.</p>
