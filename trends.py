@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parent
 HISTORY = ROOT / 'data/install-history.json'
 SOURCE = 'https://api.runelite.net/pluginhub'
 PLUGIN = 'farming-profit-tracker'
+LEAD_HISTORY = ROOT / 'data/lead-the-way-install-history.json'
+TRACKERS = {PLUGIN: HISTORY, 'lead-the-way': LEAD_HISTORY}
 
 
 def validate(rows):
@@ -23,35 +25,41 @@ def validate(rows):
     return rows
 
 
-def record(rows, payload, now):
+def record(rows, payload, now, plugin=PLUGIN):
     validate(rows)
-    if not isinstance(payload, dict) or type(payload.get(PLUGIN)) is not int or payload[PLUGIN] < 0:
+    if not isinstance(payload, dict) or type(payload.get(plugin)) is not int or payload[plugin] < 0:
         raise ValueError('Hub response has no valid plugin count; history was not changed')
     day = now.astimezone(timezone.utc).date().isoformat()
     if rows and day <= rows[-1]['date']:
         return rows  # Preserve the first successful observation each UTC day.
-    return rows + [{'date': day, 'count': payload[PLUGIN], 'observed_at': now.astimezone(timezone.utc).isoformat(timespec='seconds')}]
+    return rows + [{'date': day, 'count': payload[plugin], 'observed_at': now.astimezone(timezone.utc).isoformat(timespec='seconds')}]
 
 
 def collect():
-    rows = json.loads(HISTORY.read_text()) if HISTORY.exists() else []
     request = Request(SOURCE, headers={'User-Agent': 'LumbyLabs-install-trends/1.0'})
     with urlopen(request, timeout=30) as response:
         payload = json.load(response)
-    updated = record(rows, payload, datetime.now(timezone.utc))
-    validate(updated)
-    HISTORY.parent.mkdir(exist_ok=True)
-    temp = HISTORY.with_suffix('.tmp')
-    temp.write_text(json.dumps(updated, indent=2) + '\n')
-    temp.replace(HISTORY)
-    print(f"Recorded {updated[-1]['date']}: {updated[-1]['count']} active installs")
+    if not isinstance(payload, dict) or not payload:
+        raise ValueError('Invalid Hub response')
+    now = datetime.now(timezone.utc)
+    for plugin, history in TRACKERS.items():
+        if plugin not in payload:
+            print(f'{plugin}: Hub has not reported a count for this observation')
+            continue
+        rows = json.loads(history.read_text())
+        updated = record(rows, payload, now, plugin)
+        if updated != rows:
+            temp = history.with_suffix('.tmp')
+            temp.write_text(json.dumps(validate(updated), indent=2) + '\n')
+            temp.replace(history)
+        print(f"{plugin}: {updated[-1]['count']} active installs on {updated[-1]['date']}")
 
 
-def render(rows):
+def render(rows, name='Farming Run Profit', history=HISTORY):
     validate(rows)
-    intro = '<h1>Install trends</h1><p class="lead">Farming Run Profit’s public Plugin Hub count, recorded once a day.</p>'
+    intro = f'<h1>Install trends</h1><p class="lead">{name}’s public Plugin Hub count, recorded once a day.</p>'
     if not rows:
-        return intro + '<p>No snapshots collected yet.</p>'
+        return intro + f'<p>Waiting for the first public count.</p><p><a href="{{{{root}}}}data/{history.name}">Download snapshots (JSON)</a></p>' 
     latest = rows[-1]
     change = latest['count'] - rows[0]['count']
     summary = f'<p><strong>{latest["count"]:,} active installs</strong> at the latest snapshot. '
@@ -78,7 +86,7 @@ def render(rows):
     if len(shown)>1: svg+=f'<text x="668" y="244" text-anchor="end">{latest["date"]}</text>'
     svg+='</svg>'
     table=''.join(f'<tr><td>{r["date"]}</td><td>{r["count"]:,}</td></tr>' for r in reversed(rows))
-    return intro+summary+f'<p class="quiet">Last collected: {latest["observed_at"][:16].replace("T"," ")} UTC. Scheduled daily; updates may be delayed.</p>'+svg+'''<h2>What this tells us</h2><p>These are RuneLite’s reported active installs, not unique people, total downloads, or completed farming runs. Changes show net movement in the reported count, not exact new installs or uninstalls. Collection starts with our first snapshot; earlier history is unavailable.</p><p>Only the public count is collected. No player data or plugin telemetry is sent to Lumby Labs. Failed collections leave gaps rather than recording zero.</p><p><a href="https://api.runelite.net/pluginhub">Public data source</a> · <a href="{{root}}data/install-history.json">Download all snapshots (JSON)</a></p><h2>Daily snapshots</h2><div class="snapshot-table table-wrap"><table><caption>First successful observation per UTC day</caption><thead><tr><th scope="col">Date (UTC)</th><th scope="col">Active installs</th></tr></thead><tbody>'''+table+'</tbody></table></div>'
+    return intro+summary+f'<p class="quiet">Last collected: {latest["observed_at"][:16].replace("T"," ")} UTC. Scheduled daily; updates may be delayed.</p>'+svg+'''<h2>What this tells us</h2><p>These are RuneLite’s reported active installs, not unique people, total downloads, or plugin usage. Changes show net movement in the reported count, not exact new installs or uninstalls. Collection starts with our first snapshot; earlier history is unavailable.</p><p>Only the public count is collected. No player data or plugin telemetry is sent to Lumby Labs. Failed collections leave gaps rather than recording zero.</p><p><a href="https://api.runelite.net/pluginhub">Public data source</a> · <a href="{{root}}data/'''+history.name+'''">Download all snapshots (JSON)</a></p><h2>Daily snapshots</h2><div class="snapshot-table table-wrap"><table><caption>First successful observation per UTC day</caption><thead><tr><th scope="col">Date (UTC)</th><th scope="col">Active installs</th></tr></thead><tbody>'''+table+'</tbody></table></div>'
 
 if __name__ == '__main__':
     collect()
